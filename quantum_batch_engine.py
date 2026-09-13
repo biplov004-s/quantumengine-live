@@ -147,39 +147,84 @@ def save_master(master):
         json.dump(master, f, indent=2)
 
 
-def fetch_market_prices(symbols):
-    """Fetch real daily NSE prices from Yahoo Finance.
-
-    Despite the historical function name, this is now the live-data provider.
-    NSE symbols are requested with the ``.NS`` suffix. A 90-calendar-day
-    window gives enough observations for the 60 trading-day model.
+    def fetch_market_prices(symbols):
     """
-    tickers = [f"{sym}.NS" for sym in symbols]
-    try:
-        raw = yf.download(
-            tickers, period="90d", interval="1d", auto_adjust=True,
-            progress=False, group_by="ticker", threads=True
-        )
-    except Exception as exc:
-        raise RuntimeError(f"Market-data download failed: {exc}") from exc
+    Fetch historical NSE prices from Upstox and use the
+    latest available market price for each stock.
+    """
+
+    instrument_map = _load_upstox_instrument_map()
 
     data = {}
-    for sym in symbols:
-        ticker = f"{sym}.NS"
-        try:
-            if len(symbols) == 1:
-                close = raw["Close"] if "Close" in raw else raw["close"]
-            else:
-                close = raw[ticker]["Close"]
-            values = pd.to_numeric(close, errors="coerce").dropna().tolist()
-        except Exception:
-            values = []
-        if len(values) < 20:
+
+    for symbol in symbols:
+        symbol_upper = str(symbol).strip().upper()
+
+        instrument_key = instrument_map.get(symbol_upper)
+
+        if not instrument_key:
             raise RuntimeError(
-                f"Not enough market data for {sym}. Yahoo Finance returned "
-                f"{len(values)} observations; at least 20 are required."
+                f"Upstox instrument not found for {symbol}"
             )
-        data[sym] = values[-60:]
+
+        # Last 90 calendar days
+        today = datetime.now().date()
+        from_date = today - timedelta(days=90)
+
+        url = (
+            f"{UPSTOX_HISTORICAL_URL}/"
+            f"{instrument_key}/days/1/"
+            f"{today.isoformat()}/"
+            f"{from_date.isoformat()}"
+        )
+
+        response = requests.get(
+            url,
+            headers=_upstox_headers(),
+            timeout=20
+        )
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Upstox API error for {symbol}: "
+                f"{response.status_code} "
+                f"{response.text[:300]}"
+            )
+
+        payload = response.json()
+
+        candles = (
+            payload
+            .get("data", {})
+            .get("candles", [])
+        )
+
+        if not candles:
+            raise RuntimeError(
+                f"No historical data returned for {symbol}"
+            )
+
+        # Upstox returns newest first
+        candles = list(reversed(candles))
+
+        closes = []
+
+        for candle in candles:
+            try:
+                close = float(candle[4])
+            except (IndexError, TypeError, ValueError):
+                continue
+
+            if close > 0:
+                closes.append(close)
+
+        if len(closes) < 20:
+            raise RuntimeError(
+                f"Not enough historical data for {symbol}"
+            )
+
+        data[symbol] = closes[-60:]
+
     return data
 
 
