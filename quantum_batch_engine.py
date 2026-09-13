@@ -20,10 +20,11 @@ Files this reads/writes:
 import json
 import os
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
-import pandas as pd
-import yfinance as yf
+import requests
+import numpy as np
+
 
 import numpy as np
 from qiskit_optimization import QuadraticProgram
