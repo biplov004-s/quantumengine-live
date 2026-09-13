@@ -1,0 +1,59 @@
+{
+  "generated_at": "2026-09-13T11:16:38.738959Z",
+  "engine": "QAOA (Quantum Approximate Optimization Algorithm) on Qiskit Aer",
+  "batch_symbols": [
+    "ZENSARTECH",
+    "ZYDUSWELL",
+    "ECLERX",
+    "3MINDIA",
+    "ACC",
+    "AIAENG"
+  ],
+  "matched_classical_optimum": true,
+  "objective_value": -0.005702,
+  "signals": [
+    {
+      "symbol": "ZENSARTECH",
+      "quantum_selected": false,
+      "signal": "AVOID",
+      "expected_return_pct": 0.013,
+      "risk_estimate": 0.0169
+    },
+    {
+      "symbol": "ZYDUSWELL",
+      "quantum_selected": false,
+      "signal": "AVOID",
+      "expected_return_pct": -0.206,
+      "risk_estimate": 0.0186
+    },
+    {
+      "symbol": "ECLERX",
+      "quantum_selected": true,
+      "signal": "BUY",
+      "expected_return_pct": 0.329,
+      "risk_estimate": 0.0173
+    },
+    {
+      "symbol": "3MINDIA",
+      "quantum_selected": false,
+      "signal": "AVOID",
+      "expected_return_pct": 0.217,
+      "risk_estimate": 0.0168
+    },
+    {
+      "symbol": "ACC",
+      "quantum_selected": true,
+      "signal": "BUY",
+      "expected_return_pct": 0.282,
+      "risk_estimate": 0.0194
+    },
+    {
+      "symbol": "AIAENG",
+      "quantum_selected": false,
+      "signal": "AVOID",
+      "expected_return_pct": 0.066,
+      "risk_estimate": 0.0174
+    }
+  ],
+  "cycle": 2
+}

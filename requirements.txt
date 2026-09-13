@@ -1,0 +1,9 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+qiskit>=1.2
+qiskit-aer>=0.15
+qiskit-optimization>=0.6
+qiskit-algorithms>=0.3
+yfinance>=0.2.66
+numpy>=1.26
+pandas>=2.0

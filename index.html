@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antariksh — Quantum Portfolio Signals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14111F;
+    --panel: #1D1832;
+    --panel-raised: #241D3D;
+    --hairline: #33294f;
+    --text: #F3EFE6;
+    --text-muted: #A79FC4;
+    --saffron: #E8A33D;
+    --saffron-dim: #6b551f;
+    --violet: #8C7DF5;
+    --violet-dim: #2c2650;
+    --avoid: #6b5b8a;
+    --radius: 3px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+  }
+  ::selection{ background:var(--violet); color:#fff; }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    margin:0;
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* ---------- top disclaimer strip ---------- */
+  .strip{
+    background: #241a10;
+    border-bottom:1px solid var(--saffron-dim);
+    color: var(--saffron);
+    font-size:13.5px;
+    padding:10px 28px;
+    text-align:center;
+  }
+  .strip strong{ color:#fff; }
+
+  /* ---------- hero ---------- */
+  header.hero{
+    padding:88px 0 64px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .kicker{
+    color:var(--violet);
+    font-size:14.5px;
+    margin:0 0 18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .kicker .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--violet);
+    box-shadow:0 0 0 4px var(--violet-dim);
+  }
+  h1.title{
+    font-size:clamp(34px, 5vw, 52px);
+    letter-spacing:-0.01em;
+    max-width:14ch;
+    margin-bottom:22px;
+  }
+  .lede{
+    color:var(--text-muted);
+    font-size:18px;
+    max-width:56ch;
+    margin-bottom:40px;
+  }
+  .lede b{ color:var(--text); font-weight:500;}
+
+  .hero-grid{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:48px;
+    align-items:center;
+    margin-top:8px;
+  }
+  @media (max-width: 760px){
+    .hero-grid{ grid-template-columns:1fr; }
+  }
+
+  .circuit-box{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .circuit-box svg{ width:100%; height:auto; display:block; }
+  .circuit-caption{
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin-top:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- progress ---------- */
+  .progress-wrap{
+    margin-bottom:36px;
+  }
+  .progress-track{
+    height:6px;
+    background:var(--hairline);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--violet);
+    transition:width 0.4s ease;
+  }
+  .progress-label{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin-top:8px;
+  }
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:flex;
+    gap:12px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .controls input, .controls select{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    padding:10px 14px;
+    border-radius:2px;
+  }
+  .controls input{ flex:1; min-width:180px; }
+  .controls input:focus, .controls select:focus{
+    outline:none;
+    border-color:var(--violet);
+  }
+  .table-scroll{
+    max-height:560px;
+    overflow-y:auto;
+    border:1px solid var(--hairline);
+    border-radius:2px;
+  }
+  .table-scroll .signal-row{ padding:14px 16px; margin:0; }
+  .table-scroll .signal-row.head{
+    position:sticky; top:0;
+    background:var(--panel);
+    z-index:1;
+  }
+  .empty-state{
+    padding:32px 16px;
+    text-align:center;
+    color:var(--text-muted);
+    font-size:14px;
+  }
+
+  /* ---------- section shell ---------- */
+  section{ padding:64px 0; border-bottom:1px solid var(--hairline); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ margin-bottom:36px; max-width:60ch; }
+  .section-head h2{ font-size:28px; margin-bottom:12px; }
+  .section-head p{ color:var(--text-muted); font-size:16px; }
+
+  /* ---------- how it works: genuine 3-step sequence ---------- */
+  .flow{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:0;
+    border-top:1px solid var(--hairline);
+    border-left:1px solid var(--hairline);
+  }
+  @media (max-width: 700px){ .flow{ grid-template-columns:1fr; } }
+  .flow-step{
+    padding:28px 26px;
+    border-right:1px solid var(--hairline);
+    border-bottom:1px solid var(--hairline);
+    position:relative;
+  }
+  .flow-step .n{
+    font-family:'Fraunces', serif;
+    font-size:15px;
+    color:var(--violet);
+    margin-bottom:14px;
+  }
+  .flow-step h3{
+    font-size:19px;
+    margin-bottom:10px;
+    color:var(--text);
+  }
+  .flow-step p{
+    color:var(--text-muted);
+    font-size:14.5px;
+    margin:0;
+  }
+  .flow-step .tag{
+    display:inline-block;
+    margin-top:14px;
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:3px 8px;
+    border-radius:2px;
+  }
+  .tag.classical{ background:var(--violet-dim); color:#c9befa;}
+  .tag.quantum{ background:var(--saffron-dim); color:var(--saffron);}
+
+  /* ---------- meta bar ---------- */
+  .meta-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:32px;
+    padding:22px 0;
+    border-top:1px solid var(--hairline);
+    border-bottom:1px solid var(--hairline);
+    margin-bottom:36px;
+  }
+  .meta-item .k{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    margin-bottom:4px;
+  }
+  .meta-item .v{
+    font-size:18px;
+    font-family:'Fraunces', serif;
+  }
+  .v.ok{ color:#8fd19e; }
+
+  /* ---------- signals list ---------- */
+  .signal-row{
+    display:grid;
+    grid-template-columns: 1.4fr 1.3fr 0.8fr 0.8fr 1fr;
+    align-items:center;
+    padding:18px 0;
+    border-bottom:1px solid var(--hairline);
+    gap:16px;
+  }
+  .signal-row.head{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    padding-bottom:12px;
+  }
+  .sym{
+    font-size:17px;
+    font-weight:500;
+  }
+  .sym .full{
+    display:block;
+    font-size:12.5px;
+    color:var(--text-muted);
+    font-weight:400;
+    margin-top:2px;
+  }
+  .num{ font-family:'IBM Plex Mono', monospace; font-size:14.5px; }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:5px 10px;
+    border-radius:2px;
+    width:fit-content;
+  }
+  .badge.buy{ background:rgba(232,163,61,0.14); color:var(--saffron); border:1px solid var(--saffron-dim); }
+  .badge.avoid{ background:rgba(140,125,245,0.08); color:var(--avoid); border:1px solid var(--hairline); }
+  .badge .pip{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  /* ---------- queued ---------- */
+  .queued-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .queued-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--text-muted);
+    border:1px solid var(--hairline);
+    padding:6px 10px;
+    border-radius:2px;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    padding:48px 0 80px;
+  }
+  .fine{
+    color:var(--text-muted);
+    font-size:13.5px;
+    max-width:65ch;
+    margin:0 0 14px;
+  }
+  .fine strong{ color:var(--text); }
+  .fine a{ color:var(--violet); }
+
+  .loading, .error{
+    color:var(--text-muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    padding:24px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="strip">⚠ <strong>Educational prototype.</strong> Simulated data, not financial advice. Not a registered investment adviser under SEBI.</div>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="kicker"><span class="dot"></span>Live quantum optimization cycle</p>
+    <h1 class="title">A quantum circuit picks the portfolio, not a hunch.</h1>
+    <p class="lede">This engine runs a real <b>QAOA</b> (Quantum Approximate Optimization Algorithm) circuit on IBM's Qiskit simulator to solve the stock-selection problem — genuine quantum computation, applied to a rotating batch of the Nifty 500 universe each cycle.</p>
+
+    <div class="hero-grid">
+      <div>
+        <p style="color:var(--text-muted); font-size:15px; max-width:44ch;">
+          Classical scoring narrows 500 names down to a shortlist. The shortlist is handed to a quantum optimizer, which searches the combinatorial space of possible portfolios simultaneously — something classical brute-force struggles to scale.
+        </p>
+      </div>
+      <div class="circuit-box">
+        <svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+          <line x1="20" y1="24" x2="280" y2="24" stroke="#33294f" stroke-width="1.5"/>
+          <line x1="20" y1="58" x2="280" y2="58" stroke="#33294f" stroke-width="1.5"/>
+          <line x1="20" y1="92" x2="280" y2="92" stroke="#33294f" stroke-width="1.5"/>
+          <line x1="20" y1="126" x2="280" y2="126" stroke="#33294f" stroke-width="1.5"/>
+          <rect x="55" y="12" width="24" height="24" rx="2" fill="#2c2650" stroke="#8C7DF5"/>
+          <text x="67" y="28" text-anchor="middle" fill="#c9befa" font-size="11" font-family="IBM Plex Mono">H</text>
+          <rect x="55" y="46" width="24" height="24" rx="2" fill="#2c2650" stroke="#8C7DF5"/>
+          <text x="67" y="62" text-anchor="middle" fill="#c9befa" font-size="11" font-family="IBM Plex Mono">H</text>
+          <rect x="55" y="80" width="24" height="24" rx="2" fill="#2c2650" stroke="#8C7DF5"/>
+          <text x="67" y="96" text-anchor="middle" fill="#c9befa" font-size="11" font-family="IBM Plex Mono">H</text>
+          <rect x="55" y="114" width="24" height="24" rx="2" fill="#2c2650" stroke="#8C7DF5"/>
+          <text x="67" y="130" text-anchor="middle" fill="#c9befa" font-size="11" font-family="IBM Plex Mono">H</text>
+
+          <circle cx="140" cy="24" r="4" fill="#E8A33D"/>
+          <line x1="140" y1="24" x2="140" y2="92" stroke="#E8A33D" stroke-width="1.5"/>
+          <circle cx="140" cy="92" r="4" fill="#E8A33D"/>
+          <circle cx="175" cy="58" r="4" fill="#E8A33D"/>
+          <line x1="175" y1="58" x2="175" y2="126" stroke="#E8A33D" stroke-width="1.5"/>
+          <circle cx="175" cy="126" r="4" fill="#E8A33D"/>
+
+          <rect x="215" y="12" width="24" height="24" rx="2" fill="#241a10" stroke="#E8A33D"/>
+          <text x="227" y="28" text-anchor="middle" fill="#E8A33D" font-size="10" font-family="IBM Plex Mono">Rz</text>
+          <rect x="215" y="46" width="24" height="24" rx="2" fill="#241a10" stroke="#E8A33D"/>
+          <text x="227" y="62" text-anchor="middle" fill="#E8A33D" font-size="10" font-family="IBM Plex Mono">Rz</text>
+          <rect x="215" y="80" width="24" height="24" rx="2" fill="#241a10" stroke="#E8A33D"/>
+          <text x="227" y="96" text-anchor="middle" fill="#E8A33D" font-size="10" font-family="IBM Plex Mono">Rz</text>
+          <rect x="215" y="114" width="24" height="24" rx="2" fill="#241a10" stroke="#E8A33D"/>
+          <text x="227" y="130" text-anchor="middle" fill="#E8A33D" font-size="10" font-family="IBM Plex Mono">Rz</text>
+        </svg>
+        <p class="circuit-caption">QAOA ansatz — cost + mixer layer, p=1</p>
+      </div>
+    </div>
+  </header>
+
+  <section id="how">
+    <div class="section-head">
+      <h2>How a signal actually gets made</h2>
+      <p>Three stages, two different kinds of computing. This is the honest pipeline — no step is skipped or faked.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="n">01</div>
+        <h3>Shortlist the field</h3>
+        <p>Momentum and volatility scoring ranks the full stock universe. The top names move forward — quantum hardware today can't hold hundreds of decision variables at once, so classical computing does the wide scan.</p>
+        <span class="tag classical">classical</span>
+      </div>
+      <div class="flow-step">
+        <div class="n">02</div>
+        <h3>Optimize with QAOA</h3>
+        <p>The shortlist becomes a QUBO — maximize expected return, minimize covariance risk, pick exactly k names. A parameterized quantum circuit searches that space and is measured to find the best bitstring.</p>
+        <span class="tag quantum">quantum circuit</span>
+      </div>
+      <div class="flow-step">
+        <div class="n">03</div>
+        <h3>Publish the signal</h3>
+        <p>Selected names are marked BUY, the rest AVOID for this cycle. The result is checked against the exact classical optimum, so you can see whether the quantum solver actually found the best answer.</p>
+        <span class="tag classical">verification</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="signals">
+    <div class="section-head">
+      <h2>Nifty 500 — quantum-analyzed signals</h2>
+      <p>Every stock's most recent quantum optimization result. The engine works through the index in small batches — see the progress below for where the current rotation stands.</p>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label">
+        <span id="progress-text">Loading…</span>
+        <span id="cycle-text"></span>
+      </div>
+    </div>
+
+    <div id="meta-bar" class="meta-bar"></div>
+
+    <div class="controls">
+      <input id="search" type="text" placeholder="Search symbol, company, or industry…">
+      <select id="filter-signal">
+        <option value="ALL">All signals</option>
+        <option value="BUY">BUY only</option>
+        <option value="AVOID">AVOID only</option>
+      </select>
+    </div>
+
+    <div class="table-scroll">
+      <div class="signal-row head">
+        <div>SYMBOL</div><div>INDUSTRY</div><div>RETURN</div><div>RISK (σ)</div><div>SIGNAL</div>
+      </div>
+      <div id="signals-list"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="fine"><strong>What's real here:</strong> the QAOA circuit, the optimization math, and the classical-vs-quantum comparison all genuinely execute on IBM's Qiskit simulator each cycle. What's simulated: the price data, since live NSE data requires a paid broker API (Zerodha Kite Connect, Upstox) with your own account.</p>
+    <p class="fine"><strong>What this is not:</strong> a proven "quantum advantage" over classical methods, a live brokerage connection, or investment advice. Publishing trading signals to the public in India generally requires SEBI registration as a Research Analyst or Investment Adviser — this prototype is for learning and demonstration only.</p>
+  </footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// LIVE BACKEND CONFIG
+// The Netlify frontend reads current signals from the FastAPI backend.
+// Replace this URL with the public URL of your deployed backend.
+const BACKEND_URL = "https://quantumengine-api.onrender.com";
+const MASTER_URL = `${BACKEND_URL}/api/signals`;
+const STATE_URL = `${BACKEND_URL}/api/state`;
+const HEALTH_URL = `${BACKEND_URL}/health`;
+// ---------------------------------------------------------------------------
+
+function formatWhen(stocks){
+  if(!stocks.length) return '—';
+  const latest = stocks.reduce((a,b) => a.last_updated > b.last_updated ? a : b);
+  const d = new Date(latest.last_updated);
+  return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+let ALL_STOCKS = [];
+
+function renderList(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const filter = document.getElementById('filter-signal').value;
+  const listEl = document.getElementById('signals-list');
+
+  let rows = ALL_STOCKS.filter(s => {
+    const matchesQuery = !q ||
+      s.symbol.toLowerCase().includes(q) ||
+      s.name.toLowerCase().includes(q) ||
+      s.industry.toLowerCase().includes(q);
+    const matchesFilter = filter === 'ALL' || s.signal === filter;
+    return matchesQuery && matchesFilter;
+  });
+
+  if(rows.length === 0){
+    listEl.innerHTML = `<div class="empty-state">No stocks match that search.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = rows.map(s => `
+    <div class="signal-row">
+      <div class="sym">${s.symbol}<span class="full">${s.name}</span></div>
+      <div style="font-size:13.5px; color:var(--text-muted);">${s.industry}</div>
+      <div class="num">${s.expected_return_pct > 0 ? '+' : ''}${s.expected_return_pct}%</div>
+      <div class="num">${s.risk_estimate}</div>
+      <div>
+        <span class="badge ${s.quantum_selected ? 'buy' : 'avoid'}">
+          <span class="pip"></span>${s.signal}
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadSignals(){
+  const metaEl = document.getElementById('meta-bar');
+  const listEl = document.getElementById('signals-list');
+  try{
+    // Cache-busting is intentional: the dashboard should ask the backend for
+    // the newest JSON every time the page is opened/refreshed.
+    const cacheBust = `?t=${Date.now()}`;
+    const [masterRes, stateRes] = await Promise.all([
+      fetch(MASTER_URL + cacheBust, {cache:'no-store'}),
+      fetch(STATE_URL + cacheBust, {cache:'no-store'})
+    ]);
+
+    if(!masterRes.ok) throw new Error(`Signals API returned ${masterRes.status}`);
+    const master = await masterRes.json();
+    const state = stateRes.ok ? await stateRes.json() : null;
+
+    ALL_STOCKS = Array.isArray(master) ? master : Object.values(master);
+    const total = ALL_STOCKS.length;
+    const buyCount = ALL_STOCKS.filter(s => s.signal === 'BUY').length;
+
+    if(state && total){
+      const analyzed = Number(state.analyzed_this_cycle || 0);
+      const pct = Math.min(100, Math.round((analyzed / total) * 100));
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-text').textContent =
+        `${Math.min(analyzed,total)} / ${total} analyzed this cycle`;
+      document.getElementById('cycle-text').textContent = `Cycle ${state.cycle}`;
+    } else {
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('progress-text').textContent = `${total} / ${total} analyzed`;
+    }
+
+    const source = state?.data_source || 'Yahoo Finance (.NS)';
+    const lastRun = state?.last_run || state?.generated_at || null;
+    const lastUpdated = lastRun ? new Date(lastRun).toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'}) : formatWhen(ALL_STOCKS);
+
+    metaEl.innerHTML = `
+      <div class="meta-item"><div class="k">ENGINE</div><div class="v" style="font-size:15px;">QAOA on Qiskit</div></div>
+      <div class="meta-item"><div class="k">UNIVERSE</div><div class="v">${total} stocks</div></div>
+      <div class="meta-item"><div class="k">CURRENT BUY SIGNALS</div><div class="v ok">${buyCount}</div></div>
+      <div class="meta-item"><div class="k">DATA SOURCE</div><div class="v" style="font-size:15px;">${source}</div></div>
+      <div class="meta-item"><div class="k">BACKEND LAST RUN</div><div class="v" style="font-size:15px;">${lastUpdated}</div></div>
+    `;
+
+    document.getElementById('search').addEventListener('input', renderList);
+    document.getElementById('filter-signal').addEventListener('change', renderList);
+    renderList();
+
+  }catch(err){
+    console.error(err);
+    listEl.innerHTML = `<div class="error">Live backend is unavailable. Check BACKEND_URL and make sure the FastAPI service is running.</div>`;
+  }
+}
+loadSignals();
+</script>
+
+</body>
+</html>
