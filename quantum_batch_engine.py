@@ -44,7 +44,78 @@ LATEST_BATCH_FILE = "signals.json"
 BATCH_SIZE = 6            # qubits per QAOA run — kept small since state-vector
                            # simulation cost grows exponentially with qubit count
 BUDGET_PER_BATCH = 2       # how many of each batch's stocks get selected
-RISK_FACTOR = 0.5
+# ----------------------------------------------------------------------------
+# UPSTOX LIVE MARKET DATA
+# ----------------------------------------------------------------------------
+
+UPSTOX_ACCESS_TOKEN = os.getenv("UPSTOX_ACCESS_TOKEN", "").strip()
+
+UPSTOX_HISTORICAL_URL = "https://api.upstox.com/v3/historical-candle"
+UPSTOX_QUOTES_URL = "https://api.upstox.com/v3/market-quote/quotes"
+
+UPSTOX_INSTRUMENTS_URL = (
+    "https://assets.upstox.com/market-quote/"
+    "instruments/exchange/NSE.json.gz"
+)
+
+_UPSTOX_INSTRUMENT_MAP = None
+
+
+def _upstox_headers():
+    if not UPSTOX_ACCESS_TOKEN:
+        raise RuntimeError(
+            "UPSTOX_ACCESS_TOKEN is not configured."
+        )
+
+    return {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {UPSTOX_ACCESS_TOKEN}",
+    }
+
+
+def _load_upstox_instrument_map():
+    global _UPSTOX_INSTRUMENT_MAP
+
+    if _UPSTOX_INSTRUMENT_MAP is not None:
+        return _UPSTOX_INSTRUMENT_MAP
+
+    import gzip
+
+    response = requests.get(
+        UPSTOX_INSTRUMENTS_URL,
+        timeout=30
+    )
+    response.raise_for_status()
+
+    instruments = json.loads(
+        gzip.decompress(response.content).decode("utf-8")
+    )
+
+    mapping = {}
+
+    for item in instruments:
+        if item.get("segment") != "NSE_EQ":
+            continue
+
+        symbol = str(
+            item.get("trading_symbol", "")
+        ).strip().upper()
+
+        instrument_key = str(
+            item.get("instrument_key", "")
+        ).strip()
+
+        if symbol and instrument_key:
+            mapping[symbol] = instrument_key
+
+    if not mapping:
+        raise RuntimeError(
+            "No NSE equity instruments found from Upstox."
+        )
+
+    _UPSTOX_INSTRUMENT_MAP = mapping
+
+    return mapping
 
 
 def load_universe():
